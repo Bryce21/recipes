@@ -21,3 +21,19 @@ Workflow:
     [ ] Hapi/express server?
     [ ] Translation service here?
     [ ] Api to be able to add more documents to es cluster
+
+
+UI planning:
+name,id,minutes,contributor_id,submitted,tags,nutrition,n_steps,steps,description,ingredients,n_ingredients
+
+recipe name search/selection filter
+    recipe_name: name
+    Do multiple names? 
+submitted date range filter
+    submitted: date range info
+how long to cook range slider
+tags select filter
+n_steps number range filter
+description search
+ingredients search/filter
+n_ingredients number range filter

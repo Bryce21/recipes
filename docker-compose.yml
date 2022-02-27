@@ -85,13 +85,38 @@ services:
     volumes:
       - ./logstash.conf:/etc/logstash/conf.d/logstash.conf:ro
       - ./template.json:/etc/logstash/conf.d/template.json:ro
-      - ../data:/data/
+      - ./data:/data/
     networks:
       - elastic
     depends_on:
       - elasticsearch
       - es02
       - es03
+
+  backend:
+    container_name: hapi_backend
+    ports:
+      - "3001:3001"
+    build:
+      dockerfile: dockerfile
+      context: ./recipe_be
+    networks:
+      - elastic
+      - backend
+    volumes:
+      - ./recipe_be/:/usr/src/app
+
+  frontend:
+    container_name: react_frontend
+    ports:
+      - "3000:3000"
+    build:
+      dockerfile: dockerfile
+      context: ./recipe_ui
+    networks:
+      - backend
+    volumes:
+      - ./recipe_frontend/:/usr/src/app
 
 volumes:
   data01:
@@ -103,4 +128,6 @@ volumes:
 
 networks:
   elastic:
+    driver: bridge
+  backend:
     driver: bridge

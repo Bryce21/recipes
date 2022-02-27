@@ -1,0 +1,176 @@
+
+
+
+Broad picture:
+Make a site that can search and display recipes using elasticsearch
+
+
+
+Load the data into elasticsearch using logstash
+Have a frontend that can generate queries to send to backend that translates into actual es queries. Return the elasticsearch results
+
+The ui can build suggestors on how to build up query
+Suggestors will be anded with what is already searched
+
+
+Search type:
+    match phrase
+        name
+        description
+    match array (and)
+        tags
+        ingredients
+    number_range:
+        n_ingredients
+        n_steps
+    date_range
+        submitted
+
+
+Backend:
+Api design of valid payload type:
+
+
+    payload: {
+        fields: Joi.array().items(search)
+        size: int
+    }
+
+  search:
+    {
+
+           field: Joi.string(), // the es field to search against
+           value: Joi.array.items(Joi.any) // fields to apply a match against
+           // used to build range/date_range queries
+           date_from: Joi.date(),
+           date_to: Joi.date(),
+           num_from: Joi.number(),
+           num_to: Joi.number()
+    }
+        .without(date and num range)
+
+
+    Example queries:
+
+        {
+            field: 'tags',
+            value: ['lunch', 'preparation']
+        }
+
+        Should build up to:
+        It has double bool.must because there could be other criteria as part of the search
+        {
+          "size": 20,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "bool": {
+                    "must": [
+                      {
+                        "match_phrase_prefix": {
+                          "tags": "lunch"
+                        }
+                      },
+                      {
+                        "match_phrase_prefixd": {
+                          "tags": "preparation"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+
+        {
+            field: 'n_steps',
+            num_from: 2
+        }
+
+        Translates to:
+
+
+        {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "range": {
+                                "n_steps": {
+                                    "from": 2
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+Frontend:
+    Needs to take in user input, giving suggestions, and build query up to send to backend, get results, show search
+
+
+    Main:
+        state: {
+            rows: [],
+            submitted_date: {
+                from: null,
+                to: null
+            },
+            recipe_name: '',
+            cooking_time: {
+                from: null,
+                to: null
+            },
+            tags: [],
+            steps: [],
+            n_steps: {
+                from: null,
+                to: null
+            },
+            description: '',
+            ingredients: [],
+            n_ingredients: {
+                from: null,
+                to: null
+            }
+        },
+        functions: {
+            // make a query and clean it for suggestions based on field
+            async buildSuggestion(field) {}
+        }
+
+        Different components will control the state depending on what the state type is
+
+            StringInputAndSuggester:
+                state: {
+                    suggestions: []
+                }
+
+                props: {
+                    value: '',
+                    // function that is called when input changes
+                    onValueChange: () => {},
+                    // async function that is called to get more suggestions
+                    // called by component did update on value change on a debounce
+
+                    getSuggestions: () => {}
+                }
+
+
+
+
+        DataTableComponent:
+            Shows the search results
+            Functional, will be passed in rows and columns
+
+
+
+To do:
+    Add number range query
+    Style StringInputAndSuggester
+    If table shows an array pretty print it somehow
+
+
